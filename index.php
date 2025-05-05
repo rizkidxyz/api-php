@@ -170,7 +170,8 @@ if (isset($_POST["submit"])) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create File</title>
+  <title>Create File Fix Download Data MLBB</title>
+  <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgAjxGWGTz91ArNNUqDEo9IWHhksukSFhQ8A&s">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.3/dist/cdn.min.js" defer></script>
   <style>
@@ -271,7 +272,7 @@ if (isset($_POST["submit"])) {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Create File
+            Create File Fix MLBB
           </h1>
         </div>
         
@@ -302,7 +303,7 @@ if (isset($_POST["submit"])) {
           
           <!-- Input Field -->
           <div>
-            <label for="input" class="block text-sm font-medium text-gray-300 mb-2">Input</label>
+            <label for="input" class="block text-sm font-medium text-gray-300 mb-2">Versi</label>
             <div class="relative rounded-lg">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <!-- Number SVG from svgrepo -->
@@ -342,12 +343,12 @@ if (isset($_POST["submit"])) {
 
           <!-- Requirements Info -->
           <div class="bg-gray-700 rounded-lg p-4 text-sm">
-            <p class="text-gray-300 mb-2 font-medium">Persyaratan input:</p>
+            <p class="text-gray-300 mb-2 font-medium">Informasi :</p>
             <ul class="space-y-1 text-gray-400 pl-5 list-disc">
               <li>Minimal 9 digit angka</li>
               <li>Maksimal 15 digit angka</li>
               <li>Maksimal 6 karakter selain angka</li>
-              <li>Ex : 1.9.68.1063.1</li>
+              <li>Contoh : 1.9.68.1063.1</li>
             </ul>
             <div class="mt-3 flex gap-4">
               <div>
@@ -379,7 +380,7 @@ if (isset($_POST["submit"])) {
     <?php endif; ?>
     
     <!-- Footer -->
-    <div class="text-center mt-6 text-gray-400 text-sm">
+    <div onclick="window.location='https://youtube.com/@rizkid'" class="text-center mt-6 text-gray-400 text-sm">
       &copy; <?php echo date('Y'); ?> File Creator. All rights reserved RIZKID.
     </div>
   </div>
