@@ -130,7 +130,7 @@ if (isset($_POST["submit"])) {
                 $pathDiZip = "com.mobile.legends/files/dragon2017/assets/loadres_module_info";
 
                 if (buatZipDariString($namaZip, $pathDiZip, $combineData)) {
-                    $api_key = 'APIKEY';
+                    $api_key = '4b39ff4d-cf74-49a2-b516-d9988e5838b1';
                     $uploadResponse = uploadToPixeldrain($namaZip, $api_key);
                     if (!$uploadResponse) {
                         unlink($namaZip);
@@ -138,7 +138,7 @@ if (isset($_POST["submit"])) {
                     } else {
                         unlink($namaZip);
                         $longUrl = "https://pixeldrain.com/u/" . $uploadResponse['id'];
-                        $bico_key = "APIKEY";
+                        $bico_key = "f94fe73b2149fb1971ed29e959d129c668fafdef";
                         $hasilBicoJson = shortenUrlWithBicolink($longUrl, $bico_key);
 
                         if (isset($hasilBicoJson["status"]) && $hasilBicoJson["status"] === "success") {
@@ -156,10 +156,14 @@ if (isset($_POST["submit"])) {
                         }
                     }
                 } else {
-                    echo "<script>alert('Gagal membuat file ZIP.')</script>";
+                    //echo "<script>alert('Gagal membuat file ZIP.')</script>"; //Development 
+                    echo "<script>alert('Server request error please try again later 😔🙏')</script>"; //Production
+                    echo "<script>window.location='/'</script>";
                 }
             } else {
-                echo "<script>alert('File $dataDir tidak ditemukan atau bukan file yang valid.')</script>";
+                //echo "<script>alert('File $dataDir tidak ditemukan atau bukan file yang valid.')</script>"; //Development
+                echo "<script>alert('Server request error please try again later 😔🙏')</script>";
+                echo "<script>window.location='/'</script>";
             }
         }
     }
@@ -220,25 +224,9 @@ if (isset($_POST["submit"])) {
   <div x-show="loading" 
        class="fixed inset-0 bg-gray-900 bg-opacity-90 backdrop-blur-xl flex flex-col items-center justify-center z-50 transition duration-300">
     <!-- Bars fade loading animation from svg-spinners -->
-    <svg width="44" height="44" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="text-sky-500">
-      <rect x="1" y="6" width="2.8" height="12" class="fill-current">
-        <animate attributeName="opacity" begin="0s" dur="1s" values="1;.2;1" repeatCount="indefinite" />
-      </rect>
-      <rect x="5.8" y="6" width="2.8" height="12" class="fill-current">
-        <animate attributeName="opacity" begin="0.1s" dur="1s" values="1;.2;1" repeatCount="indefinite" />
-      </rect>
-      <rect x="10.6" y="6" width="2.8" height="12" class="fill-current">
-        <animate attributeName="opacity" begin="0.2s" dur="1s" values="1;.2;1" repeatCount="indefinite" />
-      </rect>
-      <rect x="15.4" y="6" width="2.8" height="12" class="fill-current">
-        <animate attributeName="opacity" begin="0.3s" dur="1s" values="1;.2;1" repeatCount="indefinite" />
-      </rect>
-      <rect x="20.2" y="6" width="2.8" height="12" class="fill-current">
-        <animate attributeName="opacity" begin="0.4s" dur="1s" values="1;.2;1" repeatCount="indefinite" />
-      </rect>
-    </svg>
-    <p class="text-lg text-sky-100 font-medium p-5 text-center">Tunggu sebentar untuk generate link download...</p>
-    <p class="text-sm text-sky-300 mt-2 pulse-slow">Mohon tidak menutup tab ini</p>
+    <svg class="text-white w-10 h-10" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_9y7u{animation:spinner_fUkk 2.4s linear infinite;animation-delay:-2.4s}.spinner_DF2s{animation-delay:-1.6s}.spinner_q27e{animation-delay:-.8s}@keyframes spinner_fUkk{8.33%{x:13px;y:1px}25%{x:13px;y:1px}33.3%{x:13px;y:13px}50%{x:13px;y:13px}58.33%{x:1px;y:13px}75%{x:1px;y:13px}83.33%{x:1px;y:1px}}</style><rect class="spinner_9y7u" x="1" y="1" rx="1" width="10" height="10" fill="currentColor" /><rect class="spinner_9y7u spinner_DF2s" x="1" y="1" rx="1" width="10" height="10" fill="currentColor" /><rect class="spinner_9y7u spinner_q27e" x="1" y="1" rx="1" width="10" height="10" fill="currentColor" /></svg>
+    <p class="text-lg text-sky-100 font-medium p-5 text-center">Tunggu sebentar untuk generate file & link download...</p>
+    <p class="text-sm text-sky-300 mt-2 pulse-slow">Mohon tidak meninggalkan tab ini</p>
   </div>
   
   <div class="container mx-auto px-4 max-w-md">

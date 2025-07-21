@@ -2,7 +2,7 @@
 $host = "0.0.0.0";
 $user = "root";
 $password = "root";
-$db = "rizkid";
+$db = "rizkidfix";
 
 $conn = mysqli_connect($host, $user, $password, $db);
 
