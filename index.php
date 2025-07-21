@@ -79,8 +79,9 @@ function uploadToPixeldrain($file_path, $api_key) {
     return $response ? json_decode($response, true) : false;
 }
 
+/* Kalau shortlink pakai api dari Bicolink
 function shortenUrlWithBicolink($longUrl, $bico_key) {
-    $bicoUrl = "https://bicolink.com/api?api=$bico_key&url=" . urlencode($longUrl);
+    $bicoUrl = "https://paid4link.com/api?api=$bico_key&url=" . urlencode($longUrl);
     $bch = curl_init();
     curl_setopt_array($bch, [
         CURLOPT_URL => $bicoUrl,
@@ -92,6 +93,34 @@ function shortenUrlWithBicolink($longUrl, $bico_key) {
     $hasilBico = curl_exec($bch);
     curl_close($bch);
     return json_decode($hasilBico, true);
+}
+*/
+
+//Shortlink Pakai api dari paid4link
+function shortenUrlWithBicolink($longUrl, $bico_key) {
+    $apiUrl = "https://paid4link.com/api?api=$bico_key&url=" . urlencode($longUrl);
+
+    $opts = [
+        "http" => [
+            "method" => "GET",
+            "header" => "User-Agent: Mozilla/5.0\r\n"
+        ],
+        "ssl" => [
+            "verify_peer" => false,
+            "verify_peer_name" => false
+        ]
+    ];
+
+    $context = stream_context_create($opts);
+    $response = file_get_contents($apiUrl, false, $context);
+
+    if ($response === false) {
+        //echo "<script>alert('Gagal: file_get_contents() error')</script>"; //Development Use this log alert
+        echo "<script>alert('Server Request Error Please Try Again Later 😔🙏')</script>"; //Production Use this log altert
+        echo "<script>window.location='/'</script>";
+    }
+
+    return json_decode($response, true);
 }
 
 if (isset($_POST["submit"])) {
@@ -135,10 +164,11 @@ if (isset($_POST["submit"])) {
                     if (!$uploadResponse) {
                         unlink($namaZip);
                         echo "<script>alert('server error')</script>";
+                        echo "<script>window.location='/'</script>";
                     } else {
                         unlink($namaZip);
                         $longUrl = "https://pixeldrain.com/u/" . $uploadResponse['id'];
-                        $bico_key = "f94fe73b2149fb1971ed29e959d129c668fafdef";
+                        $bico_key = "c18818e79cd4c3a8c9098fc444420893338f5522";
                         $hasilBicoJson = shortenUrlWithBicolink($longUrl, $bico_key);
 
                         if (isset($hasilBicoJson["status"]) && $hasilBicoJson["status"] === "success") {
@@ -149,10 +179,12 @@ if (isset($_POST["submit"])) {
                                 $urlDownload = $sl;
                                 $processComplete = true;
                             } else {
-                                echo("<script>alert('Gagal menyimpan data')</script>");
+                                echo("<script>alert('Server Request Error Please Try Again Later 😔🙏')</script>");
+                                echo "<script>window.location='/'</script>";
                             }
                         } else {
-                            echo "<script>alert('Gagal: " . json_encode($hasilBicoJson) . "')</script>";
+                            echo "<script>alert('Server Request Error Please Try Again Later 😔🙏')</script>"; //Development Use this log altert
+                            echo "<script>window.location='/'</script>";
                         }
                     }
                 } else {
