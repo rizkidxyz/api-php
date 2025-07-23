@@ -1,127 +1,9 @@
 <?php
+session_start();
 require_once("config.php");
+require_once("utils/function.php");
 $urlDownload = null;
 $processComplete = false;
-
-function buatZipDariString($zipName, $pathDiZip, $dataString) {
-    $zip = new ZipArchive();
-    if ($zip->open($zipName, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
-        trigger_error("Tidak dapat membuka atau membuat file ZIP \"$zipName\".", E_USER_WARNING);
-        return false;
-    }
-    if (!$zip->addFromString($pathDiZip, $dataString)) {
-        trigger_error("Gagal menambahkan data ke arsip sebagai \"$pathDiZip\".", E_USER_WARNING);
-        $zip->close();
-        return false;
-    }
-    $zip->close();
-    return true;
-}
-
-function formatVersiAsli($input) {
-    // Hapus semua karakter selain angka
-    $onlyNumbers = preg_replace('/\D/', '', $input);
-
-    // Ambil 9 digit terakhir
-    $onlyNumbers = substr($onlyNumbers, -9);
-    // Pola potongan dari belakang: [1, 4, 2, 1, 1]
-    $pattern = [1, 4, 2, 1, 1];
-    $parts = [];
-    $index = strlen($onlyNumbers);
-
-    foreach ($pattern as $length) {
-        $start = max($index - $length, 0);
-        $parts[] = substr($onlyNumbers, $start, $index - $start);
-        $index -= $length;
-    }
-    // Gabungkan sesuai urutan dari belakang
-    return implode('.', array_reverse($parts));
-}
-
-function formatVersiFile($input) {
-    // Bersihkan karakter non-angka
-    $onlyNumbers = preg_replace('/\D/', '', $input);
-
-    // Ambil 5 digit terakhir saja
-    $onlyNumbers = substr($onlyNumbers, -5);
-
-    // Jika kurang dari 5 digit, tetap proses sesuai sisa
-    $pattern = [1, 4]; // dari belakang: 1 digit, lalu 4 digit
-    $parts = [];
-    $index = strlen($onlyNumbers);
-
-    foreach ($pattern as $length) {
-        $start = max($index - $length, 0);
-        $parts[] = substr($onlyNumbers, $start, $index - $start);
-        $index -= $length;
-    }
-
-    // Gabungkan dari belakang ke depan
-    return implode('.', array_reverse($parts));
-}
-
-function uploadToPixeldrain($file_path, $api_key) {
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => "https://pixeldrain.com/api/file/" . urlencode(basename($file_path)),
-        CURLOPT_PUT => true,
-        CURLOPT_SSL_VERIFYHOST => false,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_INFILE => fopen($file_path, 'r'),
-        CURLOPT_INFILESIZE => filesize($file_path),
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => [
-            "Authorization: Basic " . base64_encode(":" . $api_key)
-        ],
-    ]);
-    $response = curl_exec($ch);
-    curl_close($ch);
-    return $response ? json_decode($response, true) : false;
-}
-
-/* Kalau shortlink pakai api dari Bicolink
-function shortenUrlWithBicolink($longUrl, $bico_key) {
-    $bicoUrl = "https://paid4link.com/api?api=$bico_key&url=" . urlencode($longUrl);
-    $bch = curl_init();
-    curl_setopt_array($bch, [
-        CURLOPT_URL => $bicoUrl,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_SSL_VERIFYHOST => false,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_HTTPHEADER => ["Authorization: Basic " . base64_encode(":" . $bico_key)],
-    ]);
-    $hasilBico = curl_exec($bch);
-    curl_close($bch);
-    return json_decode($hasilBico, true);
-}
-*/
-
-//Shortlink Pakai api dari paid4link
-function shortenUrlWithBicolink($longUrl, $bico_key) {
-    $apiUrl = "https://paid4link.com/api?api=$bico_key&url=" . urlencode($longUrl);
-
-    $opts = [
-        "http" => [
-            "method" => "GET",
-            "header" => "User-Agent: Mozilla/5.0\r\n"
-        ],
-        "ssl" => [
-            "verify_peer" => false,
-            "verify_peer_name" => false
-        ]
-    ];
-
-    $context = stream_context_create($opts);
-    $response = file_get_contents($apiUrl, false, $context);
-
-    if ($response === false) {
-        //echo "<script>alert('Gagal: file_get_contents() error')</script>"; //Development Use this log alert
-        echo "<script>alert('Server Request Error Please Try Again Later 😔🙏')</script>"; //Production Use this log altert
-        echo "<script>window.location='/'</script>";
-    }
-
-    return json_decode($response, true);
-}
 
 if (isset($_POST["submit"])) {
     $input_asli = htmlspecialchars($_POST["versi"]);
@@ -138,7 +20,8 @@ if (isset($_POST["submit"])) {
 
         if ($result->num_rows > 0) {
             $dataVersi = $result->fetch_assoc();
-            $urlDownload = $dataVersi["url_shortlink"];
+            $urlDownload = $dataVersi["url_pd"];
+            $_SESSION['download_url'] = $dataVersi["url_pd"]; // Simpan di session
             $processComplete = true;
         } else {
             $dataDir = "_data/$userServer";
@@ -168,23 +51,16 @@ if (isset($_POST["submit"])) {
                     } else {
                         unlink($namaZip);
                         $longUrl = "https://pixeldrain.com/u/" . $uploadResponse['id'];
-                        $bico_key = "c18818e79cd4c3a8c9098fc444420893338f5522";
-                        $hasilBicoJson = shortenUrlWithBicolink($longUrl, $bico_key);
-
-                        if (isset($hasilBicoJson["status"]) && $hasilBicoJson["status"] === "success") {
-                            $sl = urldecode($hasilBicoJson["shortenedUrl"]);
-                            $stmt = $conn->prepare("INSERT INTO file_fix (server, versi, url_pd, url_shortlink) VALUES (?, ?, ?, ?)");
-                            $stmt->bind_param("ssss", $userServer, $userVersion, $longUrl, $sl);
-                            if ($stmt->execute()) {
-                                $urlDownload = $sl;
-                                $processComplete = true;
-                            } else {
-                                echo("<script>alert('Server Request Error Please Try Again Later 😔🙏')</script>");
-                                echo "<script>window.location='/'</script>";
-                            }
-                        } else {
-                            echo "<script>alert('Server Request Error Please Try Again Later 😔🙏')</script>"; //Development Use this log altert
-                            echo "<script>window.location='/'</script>";
+                        $stmt = $conn->prepare("INSERT INTO file_fix (server, versi, url_pd) VALUES (?, ?, ?)");
+                        // Fix: Changed bind_param from "ssss" to "sss" (3 parameters, not 4)
+                        $stmt->bind_param("sss", $userServer, $userVersion, $longUrl);
+                        if($stmt->execute()){
+                            $urlDownload = $longUrl;
+                            $_SESSION['download_url'] = $longUrl; // Simpan di session
+                            $processComplete = true;
+                        }else{
+                            echo("<script>alert('Server Error please try again later')</script>");
+                            echo("<script>window.location='/'</script>");
                         }
                     }
                 } else {
@@ -194,11 +70,20 @@ if (isset($_POST["submit"])) {
                 }
             } else {
                 //echo "<script>alert('File $dataDir tidak ditemukan atau bukan file yang valid.')</script>"; //Development
-                echo "<script>alert('Server request error please try again later 😔🙏')</script>";
+                echo "<script>alert('Server request error please try again later 😔🙏')</script>"; //Production
                 echo "<script>window.location='/'</script>";
             }
         }
+        $stmt->close();
     }
+}
+
+if(isset($_POST["download"]) && isset($_SESSION['download_url'])){
+    $urlDownload = $_SESSION['download_url'];
+    header("Location: https://paid4link.com/st?api=c18818e79cd4c3a8c9098fc444420893338f5522&url=$urlDownload");
+    unset($_SESSION['download_url']); // Hapus dari session setelah digunakan
+    session_destroy();
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -273,15 +158,16 @@ if (isset($_POST["submit"])) {
             <img src="https://media1.tenor.com/m/eqYP-eXdCicAAAAd/nilou-genshin.gif" class="w-[150px] aspect-square rounded" alt="">
           </div>
           <p class="mb-4 text-gray-300 text-center">link download sudah siapp >3< 🥰❤️😘</p>
-          <a href="<?php echo $urlDownload; ?>" target="_blank" 
-             class="bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-700 hover:to-blue-500 text-white font-medium py-3 px-6 rounded-lg transition duration-300 flex items-center w-full justify-center shadow-lg">
-            
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            
-            Download File
-          </a>
+          <form action="" method="post">
+            <button type="submit" name="download" class="bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-700 hover:to-blue-500 text-white font-medium py-3 px-6 rounded-lg transition duration-300 flex items-center w-full justify-center shadow-lg">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              
+              Download File
+            </button>
+          </form>
         </div>
       </div>
     <?php else: ?>
@@ -400,7 +286,7 @@ if (isset($_POST["submit"])) {
     <?php endif; ?>
     
     <!-- Footer -->
-    <div onclick="window.location='https://youtube.com/@rizkid'" class="text-center mt-6 text-gray-400 text-sm">
+    <div onclick="window.location='https://youtube.com/@rizkid'" class="text-center mt-6 text-gray-400 text-sm cursor-pointer hover:text-gray-300">
       &copy; <?php echo date('Y'); ?> File Creator. All rights reserved RIZKID.
     </div>
   </div>
